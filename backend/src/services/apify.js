@@ -1,8 +1,15 @@
 const axios = require('axios');
 
-const APIFY_TOKEN = process.env.APIFY_TOKEN;
+// Não lemos o token aqui — dotenv pode ainda não ter rodado
 const ACTOR = 'compass/crawler-google-places';
 const BASE_URL = 'https://api.apify.com/v2';
+
+// Helper: garante que o token exista e o retorna
+function getToken() {
+  const token = process.env.APIFY_TOKEN;
+  if (!token) throw new Error('APIFY_TOKEN não configurado. Adicione-o no .env (local) ou nas Environment Variables da Vercel.');
+  return token;
+}
 
 // Detecta países para configurar countryCode
 const BR_CITIES = ['belo horizonte','são paulo','rio de janeiro','curitiba','porto alegre',
@@ -27,7 +34,7 @@ async function startRun(type, city, limit) {
 
   const actorId = ACTOR.replace('/', '~');
   const res = await axios.post(
-  `${BASE_URL}/acts/${actorId}/runs?token=${APIFY_TOKEN}`,
+    `${BASE_URL}/acts/${actorId}/runs?token=${getToken()}`,
     body,
     { headers: { 'Content-Type': 'application/json' }, timeout: 15000 }
   );
@@ -37,7 +44,7 @@ async function startRun(type, city, limit) {
 async function pollRun(runId, maxAttempts = 40) {
   for (let i = 0; i < maxAttempts; i++) {
     await sleep(3000);
-    const res = await axios.get(`${BASE_URL}/actor-runs/${runId}?token=${APIFY_TOKEN}`);
+    const res = await axios.get(`${BASE_URL}/actor-runs/${runId}?token=${getToken()}`);
     const { status, defaultDatasetId } = res.data.data;
 
     if (status === 'SUCCEEDED') return defaultDatasetId;
@@ -50,7 +57,7 @@ async function pollRun(runId, maxAttempts = 40) {
 
 async function getDataset(datasetId, limit) {
   const res = await axios.get(
-    `${BASE_URL}/datasets/${datasetId}/items?token=${APIFY_TOKEN}&limit=${limit}`
+    `${BASE_URL}/datasets/${datasetId}/items?token=${getToken()}&limit=${limit}`
   );
   return Array.isArray(res.data) ? res.data : [];
 }
@@ -73,7 +80,7 @@ function mapItem(r, city, type) {
 }
 
 async function scrape(type, city, limit) {
-  if (!APIFY_TOKEN) throw new Error('APIFY_TOKEN não configurado no .env');
+  getToken(); // valida logo no início antes de fazer qualquer chamada
   const runId = await startRun(type, city, limit);
   const datasetId = await pollRun(runId);
   const items = await getDataset(datasetId, limit);

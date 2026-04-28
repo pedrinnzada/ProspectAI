@@ -12,7 +12,7 @@ export default function Sidebar({ view, setView, stats, onClose }) {
       <div className="px-5 py-5 border-b border-white/5 flex items-center justify-between">
         <div>
           <div className="text-white font-bold text-lg tracking-tight">
-            Prospec<span className="text-[#e5272a]">tAI</span>
+            Prospect <span className="text-[#e5272a]">Web</span>
           </div>
           <div className="text-[10px] text-white/20 uppercase tracking-widest mt-1">Impulso Web</div>
         </div>

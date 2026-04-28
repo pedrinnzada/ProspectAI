@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const express = require('express');
 const cors = require('cors');
 const db = require('./database');
@@ -24,7 +24,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', apify: !!process.env.APIFY_TOKEN });
 });
 
-app.listen(PORT, () => {
-  console.log(`\n🚀 ProspectAI Backend rodando em http://localhost:${PORT}`);
-  console.log(`🔑 Apify Token: ${process.env.APIFY_TOKEN ? '✅ configurado' : '❌ ausente'}\n`);
-});
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`\n🚀 Prospect Web Backend rodando em http://localhost:${PORT}`);
+    console.log(`🔑 Apify Token: ${process.env.APIFY_TOKEN ? '✅ configurado' : '❌ ausente'}\n`);
+  });
+}
+
+module.exports = app;

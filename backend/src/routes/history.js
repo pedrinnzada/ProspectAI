@@ -1,22 +1,36 @@
 const express = require('express');
 const router = express.Router();
-const { getDb } = require('../database');
+const { supabase } = require('../database');
 
 // GET /api/history
-router.get('/', (req, res) => {
-  const db = getDb();
-  const history = db.get('history')
-    .value()
-    .sort((a, b) => new Date(b.searched_at) - new Date(a.searched_at))
-    .slice(0, 30);
-  res.json({ history });
+router.get('/', async (req, res) => {
+  try {
+    const { data: history, error } = await supabase
+      .from('history')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(30);
+    
+    if (error) throw error;
+    res.json({ history });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // DELETE /api/history/:id
-router.delete('/:id', (req, res) => {
-  const db = getDb();
-  db.get('history').remove({ id: parseInt(req.params.id) }).write();
-  res.json({ ok: true });
+router.delete('/:id', async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('history')
+      .delete()
+      .eq('id', req.params.id);
+    
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 module.exports = router;

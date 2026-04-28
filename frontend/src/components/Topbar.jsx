@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function Topbar({ onSearch, searchLoading, filter, setFilter, setPage, onMenuClick }) {
+export default function Topbar({ onSearch, searchLoading, filter, setFilter, phoneType, setPhoneType, websiteFilter, setWebsiteFilter, setPage, onMenuClick }) {
   const [type, setType] = useState('')
   const [city, setCity] = useState('')
   const [limit, setLimit] = useState(20)
@@ -86,16 +86,36 @@ export default function Topbar({ onSearch, searchLoading, filter, setFilter, set
             onChange={e => { setFilter(e.target.value); setPage(0) }}
             className="hidden lg:block border border-gray-200 rounded-lg px-2 h-9 text-[11px] outline-none bg-white cursor-pointer"
           >
-            <option value="all">Todos</option>
+            <option value="all">Status: Todos</option>
             <option value="pending">🟡 Pendentes</option>
             <option value="closed">🟢 Fechados</option>
             <option value="refused">🔴 Recusados</option>
+          </select>
+
+          <select
+            value={phoneType}
+            onChange={e => { setPhoneType(e.target.value); setPage(0) }}
+            className="hidden lg:block border border-gray-200 rounded-lg px-2 h-9 text-[11px] outline-none bg-white cursor-pointer"
+          >
+            <option value="all">Contato: Todos</option>
+            <option value="fixo">📞 Fixo</option>
+            <option value="celular">📱 Celular</option>
+          </select>
+
+          <select
+            value={websiteFilter}
+            onChange={e => { setWebsiteFilter(e.target.value); setPage(0) }}
+            className="hidden lg:block border border-gray-200 rounded-lg px-2 h-9 text-[11px] outline-none bg-white cursor-pointer"
+          >
+            <option value="all">Site: Todos</option>
+            <option value="com_site">🌐 Com Site</option>
+            <option value="sem_site">🚫 Sem Site</option>
           </select>
         </div>
 
         {/* Mobile: logo in center */}
         <div className="sm:hidden flex-1 text-center font-bold text-[15px]">
-          Prospec<span className="text-[#e5272a]">tAI</span>
+          Prospect <span className="text-[#e5272a]">Web</span>
         </div>
 
         {/* Right side actions */}
@@ -183,6 +203,26 @@ export default function Topbar({ onSearch, searchLoading, filter, setFilter, set
             <option value="closed">🟢 Fechados</option>
             <option value="refused">🔴 Recusados</option>
           </select>
+          <div className="flex gap-2">
+            <select
+              value={phoneType}
+              onChange={e => { setPhoneType(e.target.value); setPage(0) }}
+              className="border border-gray-200 rounded-lg px-3 h-10 text-[13px] outline-none bg-white cursor-pointer flex-1"
+            >
+              <option value="all">Contato: Todos</option>
+              <option value="fixo">📞 Fixo</option>
+              <option value="celular">📱 Celular</option>
+            </select>
+            <select
+              value={websiteFilter}
+              onChange={e => { setWebsiteFilter(e.target.value); setPage(0) }}
+              className="border border-gray-200 rounded-lg px-3 h-10 text-[13px] outline-none bg-white cursor-pointer flex-1"
+            >
+              <option value="all">Site: Todos</option>
+              <option value="com_site">🌐 Com Site</option>
+              <option value="sem_site">🚫 Sem Site</option>
+            </select>
+          </div>
         </div>
       )}
 

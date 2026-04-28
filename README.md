@@ -1,10 +1,10 @@
-# 🚀 ProspectAI — Sistema de Prospecção de Empresas
+# 🚀 Prospect Web — Sistema de Prospecção de Empresas
 
-Sistema completo de prospecção com integração Apify (Google Maps Scraper).
+Sistema moderno para prospecção de leads via Google Maps (Apify), com filtros avançados e persistência em nuvem.
 
 ## Estrutura
 ```
-prospectai/
+prospect-web/
 ├── frontend/     → React + Vite + TailwindCSS
 ├── backend/      → Node.js + Express + SQLite
 └── README.md

@@ -1,33 +1,16 @@
-const low = require('lowdb');
-const FileSync = require('lowdb/adapters/FileSync');
-const path = require('path');
-const fs = require('fs');
+const { createClient } = require('@supabase/supabase-js');
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
-const DB_PATH = path.join(DATA_DIR, 'prospectai.json');
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
-let db;
-
-function getDb() {
-  if (!db) {
-    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    const adapter = new FileSync(DB_PATH);
-    db = low(adapter);
-    db.defaults({ contacts: [], history: [], cache: [], _nextId: { contacts: 1, history: 1, cache: 1 } }).write();
-  }
-  return db;
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Erro: SUPABASE_URL ou SUPABASE_ANON_KEY não configurados no .env');
 }
 
-function nextId(db, collection) {
-  const ids = db.get('_nextId').value();
-  const id = ids[collection] || 1;
-  db.set(`_nextId.${collection}`, id + 1).write();
-  return id;
-}
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 function init() {
-  getDb();
-  console.log('✅ Banco de dados JSON inicializado em', DB_PATH);
+  console.log('✅ Conectado ao Supabase:', supabaseUrl);
 }
 
-module.exports = { getDb, nextId, init };
+module.exports = { supabase, init };

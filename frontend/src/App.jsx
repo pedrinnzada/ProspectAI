@@ -17,6 +17,8 @@ export default function App() {
   const [searchLoading, setSearchLoading] = useState(false)
   const [toast, setToast] = useState(null)
   const [filter, setFilter] = useState('all')
+  const [phoneType, setPhoneType] = useState('all')
+  const [websiteFilter, setWebsiteFilter] = useState('all')
   const [page, setPage] = useState(0)
   const [total, setTotal] = useState(0)
   const [lastSearch, setLastSearch] = useState(null)
@@ -34,6 +36,8 @@ export default function App() {
         page: params.page ?? page,
         limit: 20,
         status: params.status ?? filter,
+        phoneType: params.phoneType ?? phoneType,
+        websiteFilter: params.websiteFilter ?? websiteFilter,
         favorite: view === 'favorites' ? 'true' : undefined,
         ...params,
       })
@@ -44,7 +48,7 @@ export default function App() {
       showToast('❌ Erro ao carregar contatos: ' + e.message)
     }
     setLoading(false)
-  }, [page, filter, view])
+  }, [page, filter, phoneType, websiteFilter, view])
 
   const loadHistory = async () => {
     const data = await api.getHistory()
@@ -54,7 +58,7 @@ export default function App() {
   useEffect(() => {
     loadContacts()
     loadHistory()
-  }, [view, filter, page])
+  }, [view, filter, phoneType, websiteFilter, page])
 
   const handleSearch = async (type, city, limit) => {
     setSearchLoading(true)
@@ -103,7 +107,15 @@ export default function App() {
     setSidebarOpen(false)
   }
 
-  const pageProps = { contacts, stats, loading, filter, setFilter, page, setPage, total, handleStatus, handleFavorite, handleDelete, onSearch: handleSearch, searchLoading }
+  const pageProps = { 
+    contacts, stats, loading, 
+    filter, setFilter, 
+    phoneType, setPhoneType,
+    websiteFilter, setWebsiteFilter,
+    page, setPage, total, 
+    handleStatus, handleFavorite, handleDelete, 
+    onSearch: handleSearch, searchLoading 
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
@@ -131,6 +143,10 @@ export default function App() {
           searchLoading={searchLoading}
           filter={filter}
           setFilter={setFilter}
+          phoneType={phoneType}
+          setPhoneType={setPhoneType}
+          websiteFilter={websiteFilter}
+          setWebsiteFilter={setWebsiteFilter}
           setPage={setPage}
           history={history}
           onMenuClick={() => setSidebarOpen(true)}
