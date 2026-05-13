@@ -2,10 +2,13 @@ import MetricCard from '../components/MetricCard'
 import ContactCard from '../components/ContactCard'
 import Pagination from '../components/Pagination'
 import EmptyState from '../components/EmptyState'
+import BulkSelectBar from '../components/BulkSelectBar'
 
 export default function Dashboard({
   contacts, stats, loading, filter, setFilter, page, setPage,
-  total, handleStatus, handleFavorite, handleDelete, searchLoading
+  total, handleStatus, handleFavorite, handleDelete, searchLoading,
+  selectMode, toggleSelectMode, selectedIds, setContactSelected,
+  selectAllOnPage, handleDeleteSelected, bulkDeleting, onCopyPitch,
 }) {
   const conv = stats.total > 0 ? ((stats.closed / stats.total) * 100).toFixed(1) : '0.0'
 
@@ -66,13 +69,31 @@ export default function Dashboard({
       )}
 
       {/* List header */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="text-[13px] sm:text-[14px] font-semibold">
-          Contatos
-          <span className="ml-2 bg-gray-100 text-gray-500 text-[10px] font-medium px-2 py-0.5 rounded-full">{total}</span>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between mb-3">
+        <div className="flex items-center justify-between gap-2 sm:block">
+          <div className="text-[13px] sm:text-[14px] font-semibold">
+            Contatos
+            <span className="ml-2 bg-gray-100 text-gray-500 text-[10px] font-medium px-2 py-0.5 rounded-full">{total}</span>
+          </div>
+          <div className="text-[11px] text-gray-400 sm:hidden">
+            {Math.ceil(total / 20) > 1 && `Pág ${page + 1}/${Math.ceil(total / 20)}`}
+          </div>
         </div>
-        <div className="text-[11px] text-gray-400">
-          {Math.ceil(total / 20) > 1 && `Pág ${page + 1}/${Math.ceil(total / 20)}`}
+        <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto">
+          {!loading && contacts.length > 0 && (
+            <BulkSelectBar
+              selectMode={selectMode}
+              onToggleMode={toggleSelectMode}
+              selectedCount={selectedIds.length}
+              onSelectAllPage={selectAllOnPage}
+              onDeleteSelected={handleDeleteSelected}
+              pageItemCount={contacts.length}
+              bulkDeleting={bulkDeleting}
+            />
+          )}
+          <div className="text-[11px] text-gray-400 text-right hidden sm:block">
+            {Math.ceil(total / 20) > 1 && `Pág ${page + 1}/${Math.ceil(total / 20)}`}
+          </div>
         </div>
       </div>
 
@@ -100,6 +121,10 @@ export default function Dashboard({
                 onStatus={handleStatus}
                 onFavorite={handleFavorite}
                 onDelete={handleDelete}
+                selectMode={selectMode}
+                selected={selectedIds.includes(c.id)}
+                onSelectedChange={setContactSelected}
+                onCopyPitch={onCopyPitch}
               />
             ))}
           </div>

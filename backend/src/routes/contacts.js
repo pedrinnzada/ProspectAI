@@ -88,6 +88,25 @@ router.get('/', async (req, res) => {
   }
 });
 
+// POST /api/contacts/bulk-delete  (before /:id routes)
+router.post('/bulk-delete', async (req, res) => {
+  try {
+    const ids = req.body?.ids;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Informe um array ids com ao menos um id' });
+    }
+    const clean = [...new Set(ids.map(String).filter(Boolean))].slice(0, 500);
+    if (clean.length === 0) {
+      return res.status(400).json({ error: 'Nenhum id válido' });
+    }
+    const { error } = await supabase.from('contacts').delete().in('id', clean);
+    if (error) throw error;
+    res.json({ ok: true, deleted: clean.length });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // PATCH /api/contacts/:id/status
 router.patch('/:id/status', async (req, res) => {
   try {

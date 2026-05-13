@@ -34,6 +34,11 @@ export const api = {
     request(`/contacts/${id}/favorite`, { method: 'PATCH' }),
   deleteContact: (id) =>
     request(`/contacts/${id}`, { method: 'DELETE' }),
+  deleteContactsBulk: (ids) =>
+    request('/contacts/bulk-delete', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    }),
 
   // History
   getHistory: () => request('/history'),

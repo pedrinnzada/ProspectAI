@@ -10,7 +10,12 @@ export function whatsappNumber(phone) {
   return phone.replace(/\D/g, '');
 }
 
-export function whatsappUrl(phone) {
-  const num = whatsappNumber(phone);
-  return `https://wa.me/55${num}`;
+export function whatsappUrl(phone, prefilledText) {
+  const num = whatsappNumber(phone)
+  const base = `https://wa.me/55${num}`
+  if (!prefilledText || typeof prefilledText !== 'string') return base
+  const t = prefilledText.trim()
+  if (!t) return base
+  const truncated = t.length > 1800 ? t.slice(0, 1800) + '…' : t
+  return `${base}?text=${encodeURIComponent(truncated)}`
 }

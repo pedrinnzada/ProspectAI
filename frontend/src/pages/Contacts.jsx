@@ -1,18 +1,32 @@
 import ContactCard from '../components/ContactCard'
 import Pagination from '../components/Pagination'
 import EmptyState from '../components/EmptyState'
+import BulkSelectBar from '../components/BulkSelectBar'
 
 export default function Contacts({
   contacts, loading, page, setPage, total,
-  handleStatus, handleFavorite, handleDelete
+  handleStatus, handleFavorite, handleDelete,
+  selectMode, toggleSelectMode, selectedIds, setContactSelected,
+  selectAllOnPage, handleDeleteSelected, bulkDeleting, onCopyPitch,
 }) {
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
         <div className="text-[14px] font-semibold">
           Todos os Contatos
           <span className="ml-2 bg-gray-100 text-gray-500 text-[10px] font-medium px-2 py-0.5 rounded-full">{total}</span>
         </div>
+        {!loading && contacts.length > 0 && (
+          <BulkSelectBar
+            selectMode={selectMode}
+            onToggleMode={toggleSelectMode}
+            selectedCount={selectedIds.length}
+            onSelectAllPage={selectAllOnPage}
+            onDeleteSelected={handleDeleteSelected}
+            pageItemCount={contacts.length}
+            bulkDeleting={bulkDeleting}
+          />
+        )}
       </div>
 
       {loading ? (
@@ -28,7 +42,17 @@ export default function Contacts({
         <>
           <div className="flex flex-col gap-2">
             {contacts.map(c => (
-              <ContactCard key={c.id} contact={c} onStatus={handleStatus} onFavorite={handleFavorite} onDelete={handleDelete} />
+              <ContactCard
+                key={c.id}
+                contact={c}
+                onStatus={handleStatus}
+                onFavorite={handleFavorite}
+                onDelete={handleDelete}
+                selectMode={selectMode}
+                selected={selectedIds.includes(c.id)}
+                onSelectedChange={setContactSelected}
+                onCopyPitch={onCopyPitch}
+              />
             ))}
           </div>
           <Pagination page={page} total={total} limit={20} onPage={setPage} />

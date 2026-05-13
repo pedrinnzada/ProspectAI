@@ -6,7 +6,9 @@ import Contacts from './pages/Contacts'
 import Favorites from './pages/Favorites'
 import History from './pages/History'
 import Toast from './components/Toast'
+import MessageStudio from './components/MessageStudio'
 import { api } from './utils/api'
+import { buildProspectMessage } from './utils/prospectMessages'
 
 export default function App() {
   const [view, setView] = useState('dashboard')
@@ -23,6 +25,10 @@ export default function App() {
   const [total, setTotal] = useState(0)
   const [lastSearch, setLastSearch] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState([])
+  const [bulkDeleting, setBulkDeleting] = useState(false)
+  const [messageStudioOpen, setMessageStudioOpen] = useState(false)
 
   const showToast = (msg) => {
     setToast(msg)
@@ -60,6 +66,32 @@ export default function App() {
     loadHistory()
   }, [view, filter, phoneType, websiteFilter, page])
 
+  useEffect(() => {
+    setSelectedIds([])
+    if (view !== 'dashboard' && view !== 'contacts' && view !== 'favorites') {
+      setSelectMode(false)
+    }
+  }, [page, filter, phoneType, websiteFilter, view])
+
+  useEffect(() => {
+    if (!selectMode) setSelectedIds([])
+  }, [selectMode])
+
+  const setContactSelected = useCallback((id, checked) => {
+    setSelectedIds((prev) => {
+      if (checked) return prev.includes(id) ? prev : [...prev, id]
+      return prev.filter((x) => x !== id)
+    })
+  }, [])
+
+  const selectAllOnPage = useCallback(() => {
+    setSelectedIds(contacts.map((c) => c.id))
+  }, [contacts])
+
+  const toggleSelectMode = useCallback(() => {
+    setSelectMode((m) => !m)
+  }, [])
+
   const handleSearch = async (type, city, limit) => {
     setSearchLoading(true)
     setLastSearch({ type, city, limit })
@@ -94,7 +126,31 @@ export default function App() {
   const handleDelete = async (id) => {
     await api.deleteContact(id)
     showToast('🗑️ Contato removido')
+    setSelectedIds((prev) => prev.filter((x) => x !== id))
     loadContacts()
+  }
+
+  const handleDeleteSelected = async () => {
+    const ids = [...selectedIds]
+    if (ids.length === 0) return
+    if (
+      !window.confirm(
+        `Apagar ${ids.length} contato(s)? Esta ação não pode ser desfeita.`
+      )
+    )
+      return
+    setBulkDeleting(true)
+    try {
+      await api.deleteContactsBulk(ids)
+      showToast(`🗑️ ${ids.length} contato(s) removido(s)`)
+      setSelectedIds([])
+      setSelectMode(false)
+      await loadContacts()
+    } catch (e) {
+      showToast('❌ Erro ao apagar: ' + e.message)
+    } finally {
+      setBulkDeleting(false)
+    }
   }
 
   const handleDeleteHistory = async (id) => {
@@ -107,14 +163,47 @@ export default function App() {
     setSidebarOpen(false)
   }
 
-  const pageProps = { 
-    contacts, stats, loading, 
-    filter, setFilter, 
-    phoneType, setPhoneType,
-    websiteFilter, setWebsiteFilter,
-    page, setPage, total, 
-    handleStatus, handleFavorite, handleDelete, 
-    onSearch: handleSearch, searchLoading 
+  const handleCopyPitch = async (contact) => {
+    const text = buildProspectMessage(contact)
+    if (!text) {
+      showToast('✨ Abra «Mensagens» no topo para editar o modelo')
+      setMessageStudioOpen(true)
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(text)
+      showToast('📋 Mensagem copiada!')
+    } catch {
+      showToast('❌ Não foi possível copiar (permissão do navegador?)')
+    }
+  }
+
+  const pageProps = {
+    contacts,
+    stats,
+    loading,
+    filter,
+    setFilter,
+    phoneType,
+    setPhoneType,
+    websiteFilter,
+    setWebsiteFilter,
+    page,
+    setPage,
+    total,
+    handleStatus,
+    handleFavorite,
+    handleDelete,
+    onSearch: handleSearch,
+    searchLoading,
+    selectMode,
+    toggleSelectMode,
+    selectedIds,
+    setContactSelected,
+    selectAllOnPage,
+    handleDeleteSelected,
+    bulkDeleting,
+    onCopyPitch: handleCopyPitch,
   }
 
   return (
@@ -148,8 +237,8 @@ export default function App() {
           websiteFilter={websiteFilter}
           setWebsiteFilter={setWebsiteFilter}
           setPage={setPage}
-          history={history}
           onMenuClick={() => setSidebarOpen(true)}
+          onOpenMessageStudio={() => setMessageStudioOpen(true)}
         />
         <main className="flex-1 overflow-y-auto p-3 sm:p-5 scrollbar-thin">
           {view === 'dashboard' && <Dashboard {...pageProps} lastSearch={lastSearch} />}
@@ -158,6 +247,8 @@ export default function App() {
           {view === 'history' && <History history={history} onDelete={handleDeleteHistory} onRerun={handleSearch} searchLoading={searchLoading} />}
         </main>
       </div>
+
+      <MessageStudio open={messageStudioOpen} onClose={() => setMessageStudioOpen(false)} />
 
       {toast && <Toast message={toast} />}
     </div>

@@ -1,6 +1,18 @@
 import { useState } from 'react'
 
-export default function Topbar({ onSearch, searchLoading, filter, setFilter, phoneType, setPhoneType, websiteFilter, setWebsiteFilter, setPage, onMenuClick }) {
+export default function Topbar({
+  onSearch,
+  searchLoading,
+  filter,
+  setFilter,
+  phoneType,
+  setPhoneType,
+  websiteFilter,
+  setWebsiteFilter,
+  setPage,
+  onMenuClick,
+  onOpenMessageStudio,
+}) {
   const [type, setType] = useState('')
   const [city, setCity] = useState('')
   const [limit, setLimit] = useState(20)
@@ -79,6 +91,18 @@ export default function Topbar({ onSearch, searchLoading, filter, setFilter, pho
             )}
           </button>
 
+          {typeof onOpenMessageStudio === 'function' && (
+            <button
+              type="button"
+              onClick={onOpenMessageStudio}
+              className="border border-violet-200 bg-violet-50 text-violet-900 text-[11px] font-semibold rounded-lg px-2.5 h-9 hover:bg-violet-100 hover:border-violet-300 transition flex-shrink-0 flex items-center gap-1"
+              title="Modelos de mensagem: WhatsApp com texto automático"
+            >
+              <span className="text-[13px]" aria-hidden>✨</span>
+              <span className="hidden md:inline">Mensagens</span>
+            </button>
+          )}
+
           <div className="hidden lg:block w-px h-6 bg-gray-200 mx-1" />
 
           <select
@@ -120,6 +144,16 @@ export default function Topbar({ onSearch, searchLoading, filter, setFilter, pho
 
         {/* Right side actions */}
         <div className="flex items-center gap-2 ml-auto sm:ml-0">
+          {typeof onOpenMessageStudio === 'function' && (
+            <button
+              type="button"
+              onClick={onOpenMessageStudio}
+              className="sm:hidden flex-shrink-0 p-2 rounded-lg border border-violet-200 bg-violet-50 text-violet-900 hover:bg-violet-100 transition"
+              aria-label="Mensagens e modelos"
+            >
+              <span className="text-[16px] leading-none">✨</span>
+            </button>
+          )}
           {/* Mobile search toggle */}
           <button
             onClick={() => setSearchOpen(o => !o)}
