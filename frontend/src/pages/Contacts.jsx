@@ -5,9 +5,10 @@ import BulkSelectBar from '../components/BulkSelectBar'
 
 export default function Contacts({
   contacts, loading, page, setPage, total,
-  handleStatus, handleFavorite, handleDelete,
+  handleFavorite, handleDelete,
   selectMode, toggleSelectMode, selectedIds, setContactSelected,
-  selectAllOnPage, handleDeleteSelected, bulkDeleting, onCopyPitch,
+  selectAllOnPage, handleDeleteSelected, bulkDeleting,
+  onWaOneTap, showToast, onOpenMessageStudio,
 }) {
   return (
     <div>
@@ -37,21 +38,22 @@ export default function Contacts({
           </svg>
         </div>
       ) : contacts.length === 0 ? (
-        <EmptyState icon="👥" title="Nenhum contato encontrado" subtitle="Tente remover o filtro de status" />
+        <EmptyState icon="👥" title="Nenhum contato encontrado" subtitle="Ajuste os filtros de telefone ou site no topo" />
       ) : (
         <>
-          <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             {contacts.map(c => (
               <ContactCard
                 key={c.id}
                 contact={c}
-                onStatus={handleStatus}
                 onFavorite={handleFavorite}
                 onDelete={handleDelete}
                 selectMode={selectMode}
                 selected={selectedIds.includes(c.id)}
                 onSelectedChange={setContactSelected}
-                onCopyPitch={onCopyPitch}
+                onWaOneTap={onWaOneTap}
+                showToast={showToast}
+                onOpenMessageStudio={onOpenMessageStudio}
               />
             ))}
           </div>

@@ -8,17 +8,16 @@ import History from './pages/History'
 import Toast from './components/Toast'
 import MessageStudio from './components/MessageStudio'
 import { api } from './utils/api'
-import { buildProspectMessage } from './utils/prospectMessages'
+import { recordWaRoundId } from './utils/waQueue'
 
 export default function App() {
   const [view, setView] = useState('dashboard')
   const [contacts, setContacts] = useState([])
-  const [stats, setStats] = useState({ total: 0, closed: 0, refused: 0, pending: 0, favorites: 0 })
+  const [stats, setStats] = useState({ total: 0, favorites: 0, withPhone: 0, withMobile: 0 })
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(false)
   const [searchLoading, setSearchLoading] = useState(false)
   const [toast, setToast] = useState(null)
-  const [filter, setFilter] = useState('all')
   const [phoneType, setPhoneType] = useState('all')
   const [websiteFilter, setWebsiteFilter] = useState('all')
   const [page, setPage] = useState(0)
@@ -41,7 +40,6 @@ export default function App() {
       const data = await api.getContacts({
         page: params.page ?? page,
         limit: 20,
-        status: params.status ?? filter,
         phoneType: params.phoneType ?? phoneType,
         websiteFilter: params.websiteFilter ?? websiteFilter,
         favorite: view === 'favorites' ? 'true' : undefined,
@@ -54,7 +52,7 @@ export default function App() {
       showToast('❌ Erro ao carregar contatos: ' + e.message)
     }
     setLoading(false)
-  }, [page, filter, phoneType, websiteFilter, view])
+  }, [page, phoneType, websiteFilter, view])
 
   const loadHistory = async () => {
     const data = await api.getHistory()
@@ -64,14 +62,14 @@ export default function App() {
   useEffect(() => {
     loadContacts()
     loadHistory()
-  }, [view, filter, phoneType, websiteFilter, page])
+  }, [view, phoneType, websiteFilter, page])
 
   useEffect(() => {
     setSelectedIds([])
     if (view !== 'dashboard' && view !== 'contacts' && view !== 'favorites') {
       setSelectMode(false)
     }
-  }, [page, filter, phoneType, websiteFilter, view])
+  }, [page, phoneType, websiteFilter, view])
 
   useEffect(() => {
     if (!selectMode) setSelectedIds([])
@@ -100,9 +98,8 @@ export default function App() {
       const data = await api.search(type, city, limit)
       showToast(`✅ ${data.count} empresas encontradas!${data.cached ? ' (cache)' : ''}`)
       setView('dashboard')
-      setFilter('all')
       setPage(0)
-      await loadContacts({ page: 0, status: 'all' })
+      await loadContacts({ page: 0 })
       await loadHistory()
     } catch (e) {
       showToast('❌ Erro Apify: ' + e.message)
@@ -110,12 +107,9 @@ export default function App() {
     setSearchLoading(false)
   }
 
-  const handleStatus = async (id, status) => {
-    await api.setStatus(id, status)
-    const labels = { closed: '✅ Fechado', refused: '❌ Recusado', pending: '🕐 Retornar depois' }
-    showToast(labels[status])
-    loadContacts()
-  }
+  const handleWaOneTap = useCallback((contact) => {
+    if (contact?.id != null) recordWaRoundId(contact.id)
+  }, [])
 
   const handleFavorite = async (id) => {
     const data = await api.toggleFavorite(id)
@@ -163,27 +157,12 @@ export default function App() {
     setSidebarOpen(false)
   }
 
-  const handleCopyPitch = async (contact) => {
-    const text = buildProspectMessage(contact)
-    if (!text) {
-      showToast('✨ Abra «Mensagens» no topo para editar o modelo')
-      setMessageStudioOpen(true)
-      return
-    }
-    try {
-      await navigator.clipboard.writeText(text)
-      showToast('📋 Mensagem copiada!')
-    } catch {
-      showToast('❌ Não foi possível copiar (permissão do navegador?)')
-    }
-  }
+  const openMessageStudio = () => setMessageStudioOpen(true)
 
   const pageProps = {
     contacts,
     stats,
     loading,
-    filter,
-    setFilter,
     phoneType,
     setPhoneType,
     websiteFilter,
@@ -191,7 +170,6 @@ export default function App() {
     page,
     setPage,
     total,
-    handleStatus,
     handleFavorite,
     handleDelete,
     onSearch: handleSearch,
@@ -203,7 +181,9 @@ export default function App() {
     selectAllOnPage,
     handleDeleteSelected,
     bulkDeleting,
-    onCopyPitch: handleCopyPitch,
+    onWaOneTap: handleWaOneTap,
+    showToast,
+    onOpenMessageStudio: openMessageStudio,
   }
 
   return (
@@ -230,15 +210,13 @@ export default function App() {
         <Topbar
           onSearch={handleSearch}
           searchLoading={searchLoading}
-          filter={filter}
-          setFilter={setFilter}
           phoneType={phoneType}
           setPhoneType={setPhoneType}
           websiteFilter={websiteFilter}
           setWebsiteFilter={setWebsiteFilter}
           setPage={setPage}
           onMenuClick={() => setSidebarOpen(true)}
-          onOpenMessageStudio={() => setMessageStudioOpen(true)}
+          onOpenMessageStudio={openMessageStudio}
         />
         <main className="flex-1 overflow-y-auto p-3 sm:p-5 scrollbar-thin">
           {view === 'dashboard' && <Dashboard {...pageProps} lastSearch={lastSearch} />}

@@ -3,58 +3,43 @@ import ContactCard from '../components/ContactCard'
 import Pagination from '../components/Pagination'
 import EmptyState from '../components/EmptyState'
 import BulkSelectBar from '../components/BulkSelectBar'
+import ProspectPilot from '../components/ProspectPilot'
 
 export default function Dashboard({
-  contacts, stats, loading, filter, setFilter, page, setPage,
-  total, handleStatus, handleFavorite, handleDelete, searchLoading,
+  contacts, stats, loading, page, setPage,
+  total, handleFavorite, handleDelete, searchLoading,
   selectMode, toggleSelectMode, selectedIds, setContactSelected,
-  selectAllOnPage, handleDeleteSelected, bulkDeleting, onCopyPitch,
+  selectAllOnPage, handleDeleteSelected, bulkDeleting,
+  onWaOneTap, showToast, onOpenMessageStudio,
 }) {
-  const conv = stats.total > 0 ? ((stats.closed / stats.total) * 100).toFixed(1) : '0.0'
-
   return (
     <div>
-      {/* Metrics — 2 cols on mobile, 3 on sm, 5 on lg */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 mb-4 sm:mb-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-5">
         <MetricCard
           label="Total"
           value={stats.total}
-          sub={`${stats.favorites} favoritos`}
-          onClick={() => { setFilter('all'); setPage(0) }}
-          active={filter === 'all'}
+          sub="na base"
         />
         <MetricCard
-          label="Fechados"
-          value={stats.closed}
-          sub="convertidos"
+          label="Com telefone"
+          value={stats.withPhone ?? 0}
+          sub="prontos para WA"
+          color="#7c3aed"
+        />
+        <MetricCard
+          label="Celular"
+          value={stats.withMobile ?? 0}
+          sub="WhatsApp direto"
           color="#22c55e"
-          onClick={() => { setFilter('closed'); setPage(0) }}
-          active={filter === 'closed'}
         />
         <MetricCard
-          label="Recusados"
-          value={stats.refused}
-          sub="sem interesse"
-          color="#e5272a"
-          onClick={() => { setFilter('refused'); setPage(0) }}
-          active={filter === 'refused'}
-        />
-        <MetricCard
-          label="Pendentes"
-          value={stats.pending}
-          sub="retornar"
+          label="Favoritos"
+          value={stats.favorites}
+          sub="atalho na sidebar"
           color="#f59e0b"
-          onClick={() => { setFilter('pending'); setPage(0) }}
-          active={filter === 'pending'}
-        />
-        <MetricCard
-          label="Conversão"
-          value={`${conv}%`}
-          sub={`de ${stats.total} contatos`}
         />
       </div>
 
-      {/* Searching banner */}
       {searchLoading && (
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 sm:p-4 mb-4 flex items-center gap-3">
           <svg className="animate-spin w-4 h-4 text-gray-900 flex-shrink-0" viewBox="0 0 24 24" fill="none">
@@ -68,7 +53,6 @@ export default function Dashboard({
         </div>
       )}
 
-      {/* List header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between mb-3">
         <div className="flex items-center justify-between gap-2 sm:block">
           <div className="text-[13px] sm:text-[14px] font-semibold">
@@ -97,6 +81,14 @@ export default function Dashboard({
         </div>
       </div>
 
+      {!loading && !searchLoading && (
+        <ProspectPilot
+          showToast={showToast}
+          onOpenMessageStudio={onOpenMessageStudio}
+          refreshKey={`${stats.total}-${stats.withPhone}`}
+        />
+      )}
+
       {loading && !searchLoading ? (
         <div className="text-center py-12">
           <svg className="animate-spin w-7 h-7 text-gray-300 mx-auto mb-3" viewBox="0 0 24 24" fill="none">
@@ -113,18 +105,19 @@ export default function Dashboard({
         />
       ) : (
         <>
-          <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             {contacts.map(c => (
               <ContactCard
                 key={c.id}
                 contact={c}
-                onStatus={handleStatus}
                 onFavorite={handleFavorite}
                 onDelete={handleDelete}
                 selectMode={selectMode}
                 selected={selectedIds.includes(c.id)}
                 onSelectedChange={setContactSelected}
-                onCopyPitch={onCopyPitch}
+                onWaOneTap={onWaOneTap}
+                showToast={showToast}
+                onOpenMessageStudio={onOpenMessageStudio}
               />
             ))}
           </div>
@@ -134,4 +127,3 @@ export default function Dashboard({
     </div>
   )
 }
-

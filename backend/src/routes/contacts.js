@@ -2,18 +2,65 @@ const express = require('express');
 const router = express.Router();
 const { supabase } = require('../database');
 
+function isMobileBr(phone) {
+  if (!phone || typeof phone !== 'string') return false;
+  const digits = phone.replace(/\D/g, '');
+  const local = digits.length > 9 ? digits.slice(-9) : digits;
+  return local.startsWith('9') || local.startsWith('8');
+}
+
+// POST /api/contacts/next-in-queue — próximo com telefone (celular primeiro, FIFO); body: { excludeIds?: string[] }
+router.post('/next-in-queue', async (req, res) => {
+  try {
+    const raw = req.body?.excludeIds;
+    const excludeIds = Array.isArray(raw) ? raw : [];
+    const excludeSet = new Set(excludeIds.map(String).filter(Boolean).slice(0, 400));
+
+    const { data: rows, error } = await supabase
+      .from('contacts')
+      .select('*')
+      .not('phone', 'is', null)
+      .neq('phone', '')
+      .order('created_at', { ascending: true })
+      .limit(120);
+
+    if (error) throw error;
+
+    const list = (rows || []).filter((r) => r.id != null && !excludeSet.has(String(r.id)));
+    const sorted = [...list].sort((a, b) => {
+      const ma = isMobileBr(a.phone);
+      const mb = isMobileBr(b.phone);
+      if (ma && !mb) return -1;
+      if (!ma && mb) return 1;
+      return 0;
+    });
+
+    const { count: withPhoneCount, error: countErr } = await supabase
+      .from('contacts')
+      .select('*', { count: 'exact', head: true })
+      .not('phone', 'is', null)
+      .neq('phone', '');
+
+    if (countErr) throw countErr;
+
+    res.json({
+      contact: sorted[0] || null,
+      queueCount: withPhoneCount ?? list.length,
+      remainingAfterExclude: sorted.length,
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // GET /api/contacts
 router.get('/', async (req, res) => {
   try {
-    const { status, favorite, search, phoneType, websiteFilter, page = 0, limit = 20 } = req.query;
+    const { favorite, search, phoneType, websiteFilter, page = 0, limit = 20 } = req.query;
     const offset = parseInt(page) * parseInt(limit);
 
     let query = supabase.from('contacts').select('*', { count: 'exact' });
-
-    // Status filter
-    if (status && status !== 'all') {
-      query = query.eq('status', status);
-    }
 
     // Favorite filter
     if (favorite === 'true') {
@@ -66,19 +113,21 @@ router.get('/', async (req, res) => {
       });
     }
 
-    // Stats
-    const { data: allStats, error: statsError } = await supabase
+    // Stats (foco em prospecção / WhatsApp)
+    const { data: allRows, error: statsError } = await supabase
       .from('contacts')
-      .select('status, favorite');
+      .select('phone, favorite');
 
     if (statsError) throw statsError;
 
+    const withPhone = allRows.filter((c) => c.phone && String(c.phone).trim()).length;
+    const withMobile = allRows.filter((c) => isMobileBr(c.phone)).length;
+
     const stats = {
-      total: allStats.length,
-      closed: allStats.filter(c => c.status === 'closed').length,
-      refused: allStats.filter(c => c.status === 'refused').length,
-      pending: allStats.filter(c => c.status === 'pending').length,
-      favorites: allStats.filter(c => c.favorite).length,
+      total: allRows.length,
+      favorites: allRows.filter((c) => c.favorite).length,
+      withPhone,
+      withMobile,
     };
 
     res.json({ contacts: filteredContacts, total: total || 0, page: parseInt(page), stats });

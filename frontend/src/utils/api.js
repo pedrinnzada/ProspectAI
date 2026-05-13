@@ -25,10 +25,10 @@ export const api = {
     const q = new URLSearchParams(params).toString();
     return request(`/contacts?${q}`);
   },
-  setStatus: (id, status) =>
-    request(`/contacts/${id}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status }),
+  getNextInQueue: (excludeIds = []) =>
+    request('/contacts/next-in-queue', {
+      method: 'POST',
+      body: JSON.stringify({ excludeIds: Array.isArray(excludeIds) ? excludeIds : [] }),
     }),
   toggleFavorite: (id) =>
     request(`/contacts/${id}/favorite`, { method: 'PATCH' }),
@@ -39,8 +39,6 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ ids }),
     }),
-
-  // History
   getHistory: () => request('/history'),
   deleteHistory: (id) => request(`/history/${id}`, { method: 'DELETE' }),
 };
